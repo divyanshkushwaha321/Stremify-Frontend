@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import axios from "axios";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
@@ -11,10 +13,11 @@ import IntentSelector from "@/components/auth/IntentSelector";
 import CreatorPerks from "@/components/auth/CreatorPerks";
 
 export default function RegisterPage() {
+  const router = useRouter();
 
   // Form Fields State
   const [fullName, setFullName] = useState("");
-  const [handle, setHandle] = useState("");
+  const [userName, setUserName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [updatesConsent, setUpdatesConsent] = useState(true);
@@ -102,8 +105,9 @@ export default function RegisterPage() {
   };
 
   // Registration Submission Handler
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+
     setErrorMessage(null);
     setSuccessMessage(null);
 
@@ -122,15 +126,50 @@ export default function RegisterPage() {
       return;
     }
 
-    setIsSubmitting(true);
-    setSuccessMessage("Account created successfully! Welcome to Streamify.");
+    try {
+      setIsSubmitting(true)
 
-    setTimeout(() => {
-      setIsSubmitting(false);
-      if (typeof window !== "undefined") {
-        window.location.href = "/homepage";
+      const formData = new FormData();
+
+      formData.append("fullname", fullName.trim());
+      formData.append("username", userName.trim());
+      formData.append("email", email.trim());
+      formData.append("password", password);
+      formData.append("avatar", avatar);
+      if (coverImage) {
+        formData.append("coverImage", coverImage);
       }
-    }, 600);
+
+      const response = await axios.post(
+        "http://localhost:8000/api/users/register",
+        formData
+      )
+
+      setSuccessMessage(response.data?.message || "Account created successfully");
+
+      // Clear Form and close Registration Form
+      setFullName("");
+      setUserName("");
+      setEmail("");
+      setPassword("");
+      setAvatar(null);
+      setAvatarPreview(null);
+      setCoverImage(null);
+      setCoverImagePreview(null);
+      setTermsConsent(false);
+
+      // Redirect to /login page after registration
+      setTimeout(() => {
+        router.push("/login");
+      }, 500);
+
+    }
+    catch (error) {
+      console.log("Registration error:", error.response?.data || error)
+      setErrorMessage(error.response?.data.message || "Registration failed. Please try again.")
+
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -282,11 +321,10 @@ export default function RegisterPage() {
                             {/* Circular Avatar Frame */}
                             <div
                               onClick={() => avatarInputRef.current?.click()}
-                              className={`relative w-20 h-20 sm:w-24 sm:h-24 rounded-full border-4 border-surface-container shadow-2xl overflow-hidden cursor-pointer bg-surface-container-highest flex items-center justify-center group/avatar transition-transform active:scale-95 shrink-0 ${
-                                !avatar && showAvatarError
-                                  ? "ring-2 ring-error animate-pulse"
-                                  : "hover:ring-2 hover:ring-primary/60"
-                              }`}
+                              className={`relative w-20 h-20 sm:w-24 sm:h-24 rounded-full border-4 border-surface-container shadow-2xl overflow-hidden cursor-pointer bg-surface-container-highest flex items-center justify-center group/avatar transition-transform active:scale-95 shrink-0 ${!avatar && showAvatarError
+                                ? "ring-2 ring-error animate-pulse"
+                                : "hover:ring-2 hover:ring-primary/60"
+                                }`}
                               title="Click to upload Profile Avatar"
                             >
                               {avatarPreview ? (
@@ -402,8 +440,8 @@ export default function RegisterPage() {
                             placeholder="alexmercer"
                             required
                             type="text"
-                            value={handle}
-                            onChange={(e) => setHandle(e.target.value)}
+                            value={userName}
+                            onChange={(e) => setUserName(e.target.value)}
                           />
                           <span className="material-symbols-outlined absolute right-space-md text-[18px] text-tertiary">
                             check_circle
