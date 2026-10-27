@@ -4,7 +4,6 @@ import { useState, useRef, useEffect } from "react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import SocialAuth from "@/components/auth/SocialAuth";
 import PasswordInput from "@/components/auth/PasswordInput";
@@ -85,7 +84,7 @@ export default function RegisterPage() {
       setErrorMessage(null);
     }
   };
-
+  
   // Remove Avatar
   const handleRemoveAvatar = (e) => {
     e.stopPropagation();
@@ -174,9 +173,8 @@ export default function RegisterPage() {
 
   return (
     <>
-      <Header />
 
-      <main className="w-full pt-16 flex-1 flex flex-col bg-surface">
+      <main className="w-full flex-1 flex flex-col bg-surface">
         <div className="flex flex-col w-full">
           <div className="relative w-full overflow-hidden px-gutter py-space-xl">
             {/* Ambient Neon Diffusion Orbs */}

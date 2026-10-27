@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import axios from "axios";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
-import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import SocialAuth from "@/components/auth/SocialAuth";
 import PasswordInput from "@/components/auth/PasswordInput";
@@ -14,11 +15,45 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(true);
 
+  const router = useRouter();
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleLogin = async (e) => {
+
+    e.preventDefault();
+
+    setIsSubmitting(true)
+    setError("");
+
+    try {
+
+      const response = await axios.post(
+        "http://localhost:8000/api/users/login",
+        {
+          email: identity,
+          username: identity,
+          password: password,
+        },
+        {
+          withCredentials: true
+        }
+      );
+      router.push("/homepage");
+    }
+    catch (err) {
+      console.log("Login error: ", err.response?.data || err.message)
+
+      setError(err.response?.data?.message || "Login failed. Please check your credentials.")
+      setIsSubmitting(false)
+    }
+  }
+
   return (
     <>
-      <Header />
 
-      <main className="w-full pt-16 flex-1 flex flex-col bg-surface">
+      <main className="w-full flex-1 flex flex-col bg-surface">
         <div className="flex flex-col w-full">
           <div className="relative w-full min-h-[calc(100vh-4rem)] flex items-stretch overflow-hidden bg-surface">
             {/* Ambient Neon Diffusion Orbs */}
@@ -68,7 +103,7 @@ export default function LoginPage() {
 
                     {/* Login Form */}
                     <form
-                      onSubmit={(e) => e.preventDefault()}
+                      onSubmit={handleLogin}
                       className="flex flex-col gap-space-md mt-space-sm"
                     >
                       {/* Input: Username / Email */}
@@ -126,6 +161,13 @@ export default function LoginPage() {
                         />
                       </div>
 
+                      {/* Error message */}
+                      {error && (
+                        <p className="text-sm text-red-500" role="alert">
+                          {error}
+                        </p>
+                      )}
+
                       {/* Keep Me Logged In Checkbox */}
                       <div className="flex items-center justify-between pt-space-xs">
                         <label className="flex items-center gap-2.5 cursor-pointer select-none">
@@ -144,16 +186,23 @@ export default function LoginPage() {
                         </span>
                       </div>
 
-                      {/* Submit Action Link to /homepage */}
-                      <Link
-                        href="/homepage"
-                        className="mt-space-sm w-full h-12 rounded-lg bg-primary-container text-on-primary-container font-headline-sm text-headline-sm font-semibold tracking-wide hover:brightness-110 active:scale-[0.99] transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary-container/20 cursor-pointer text-center"
+                      {/* Submit Button */}
+                      <button
+                        type="submit"
+                        disabled={isSubmitting}
+                        className="mt-space-sm w-full h-12 rounded-lg bg-primary-container text-on-primary-container font-headline-sm text-headline-sm font-semibold tracking-wide hover:brightness-110 active:scale-[0.99] transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary-container/20 cursor-pointer text-center disabled:opacity-60 disabled:cursor-not-allowed"
                       >
-                        <span>Sign In to Dashboard</span>
-                        <span className="material-symbols-outlined text-[20px]">
-                          arrow_forward
+                        <span>
+                          {isSubmitting ? "Signing in..." : "Sign In to Dashboard"}
                         </span>
-                      </Link>
+
+                        {!isSubmitting && (
+                          <span className="material-symbols-outlined text-[20px]">
+                            arrow_forward
+                          </span>
+                        )}
+                      </button>
+
                     </form>
                   </div>
 

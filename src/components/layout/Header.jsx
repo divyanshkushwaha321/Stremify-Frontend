@@ -1,13 +1,36 @@
 "use client";
 
 import Link from "next/link";
+import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { BRAND, NAV_LINKS } from "@/constants/navigation";
+import axios from "axios";
+import ProfileDropdown from "./ProfileDropdown";
 
 export default function Header() {
+
   const pathname = usePathname();
-  const isLoginPage = pathname === "/login" || pathname === "/";
-  const isRegisterPage = pathname === "/register";
+
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      try {
+        const response = await axios.get(
+          "http://localhost:8000/api/users/current-user",
+          {
+            withCredentials: true,
+          }
+        );
+        setUser(response.data?.data);
+      }
+      catch (err) {
+        console.log("Error: ", err || "Failed to load user data");
+        setUser(null);
+      }
+    };
+    fetchCurrentUser();
+  }, [pathname]);
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-surface/80 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)]">
@@ -49,8 +72,8 @@ export default function Header() {
                   key={link.label}
                   href={link.href}
                   className={`px-space-md py-space-sm font-label-lg text-label-lg rounded-lg transition-all ${isActive
-                      ? "bg-surface-container-high text-on-surface font-semibold"
-                      : "text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high"
+                    ? "bg-surface-container-high text-on-surface font-semibold"
+                    : "text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high"
                     }`}
                 >
                   {link.label}
@@ -93,30 +116,30 @@ export default function Header() {
             <span className="material-symbols-outlined text-[20px]">dark_mode</span>
           </button>
 
-          <nav className="flex items-center gap-space-xs">
-            <Link
-              href="/login"
-              className={`px-space-md py-space-sm font-label-lg text-label-lg rounded-lg transition-colors ${isLoginPage && pathname !== "/homepage"
-                  ? "bg-primary-container text-on-primary-container"
-                  : "text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high"
-                }`}
-            >
-              Sign In
-            </Link>
-            <Link
-              href="/register"
-              className={`px-space-md py-space-sm font-label-lg text-label-lg rounded-lg transition-colors ${isRegisterPage
-                  ? "bg-primary-container text-on-primary-container"
-                  : "text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high"
-                }`}
-            >
-              Register
-            </Link>
-          </nav>
+          {user ? (
+            <ProfileDropdown user={user} onLogout={() => setUser(null)} />
+          ) : (
+            <>
+              <nav className="flex items-center gap-space-xs">
+                <Link
+                  href="/login"
+                  className="px-space-md py-space-sm font-label-lg text-label-lg rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors"
+                >
+                  Sign In
+                </Link>
+                <Link
+                  href="/register"
+                  className="px-space-md py-space-sm font-label-lg text-label-lg rounded-lg bg-primary text-on-primary font-semibold hover:bg-primary/90 transition-colors"
+                >
+                  Register
+                </Link>
+              </nav>
 
-          <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center shrink-0">
-            <span className="material-symbols-outlined text-on-primary text-[18px]">person</span>
-          </div>
+              <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center shrink-0">
+                <span className="material-symbols-outlined text-on-primary text-[18px]">person</span>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </header>
