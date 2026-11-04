@@ -2,10 +2,13 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
+import axios from "axios";
 
 export default function ProfileDropdown({ user, onLogout }) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
+
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -36,16 +39,30 @@ export default function ProfileDropdown({ user, onLogout }) {
     setIsOpen((prev) => !prev);
   };
 
-  const handleLogout = () => {
-    setIsOpen(false);
-    // Notify parent without calling any external API
-    if (onLogout) {
-      onLogout();
+  const handleLogout = async () => {
+    try {
+      setIsLoggingOut(true);
+
+      await axios.post("http://localhost:8000/api/users/logout", {}, {
+        withCredentials: true
+      });
+      
+      // Update the Header's user state
+      if (onLogout) {
+        onLogout();
+      } 
+
+    }
+    catch (err) {
+
+      console.log("Login Failed: ", err.response?.data)
+      setIsLoggingOut(false);
+
     }
   };
 
-  const displayName = user?.fullname || "User";
-  const displayUsername = user?.username ? `@${user.username}` : user?.email || "";
+  const displayName = user?.fullname;
+  const displayUsername = user?.username;
 
   return (
     <div className="relative inline-block text-left" ref={dropdownRef}>
@@ -136,12 +153,15 @@ export default function ProfileDropdown({ user, onLogout }) {
               type="button"
               onClick={handleLogout}
               role="menuitem"
+              disabled={isLoggingOut}
               className="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-xl text-error hover:bg-error/15 transition-colors group cursor-pointer text-left"
             >
               <span className="material-symbols-outlined text-[20px] text-error group-hover:scale-105 transition-transform">
                 logout
               </span>
-              <span>Logout</span>
+              <span>
+                {isLoggingOut ? "Logging out..." : "Logout"}
+              </span>
             </button>
           </div>
         </div>
